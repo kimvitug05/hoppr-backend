@@ -1,0 +1,7 @@
+version: "2"
+
+services:
+  hoppr-backend-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
