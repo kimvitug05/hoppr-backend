@@ -10,7 +10,6 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@CrossOrigin(origins = { "http://localhost:3000", "http://www.hoppr.xyz/", "https://www.hoppr.xyz/" })
 public class DestinationController {
 
     @Autowired
