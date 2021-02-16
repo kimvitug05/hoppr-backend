@@ -1,8 +1,10 @@
 package xyz.hoppr.hoppr.destination;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -13,7 +15,6 @@ import xyz.hoppr.hoppr.exception.NotFoundException;
 import xyz.hoppr.hoppr.exception.UnauthorizedException;
 import xyz.hoppr.hoppr.exception.UnprocessableEntityException;
 
-import javax.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Collections;
@@ -74,28 +75,33 @@ public class DestinationService {
         return destinationMapper.map(destinationEntity);
     }
 
-    public SabreDestinationResponse getTopSabreDestinations() {
-        final String uri = "https://api-crt.cert.havail.sabre.com/v1/lists/top/destinations?destinationtype=domestic&lookbackweeks=12&topdestinations=50&origincountry=US";
+    public List<SabreDestinations> getTopSabreDestinations(String theme) {
+        final String uri = "https://api-crt.cert.havail.sabre.com/v1/lists/top/destinations?destinationtype=domestic&lookbackweeks=12&topdestinations=50&origincountry=US"  + (theme != null ? "&theme=" + theme.toUpperCase() : "");
+        log.info("Hitting " + uri);
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + sabreAccessToken);
         HttpEntity<String> request = new HttpEntity<>(headers);
 
         try {
-            return new RestTemplate().exchange(uri, HttpMethod.GET, request, SabreDestinationResponse.class).getBody();
+            SabreDestinationResponse sabreDestinationResponse = new RestTemplate().exchange(uri, HttpMethod.GET, request, SabreDestinationResponse.class).getBody();
+
+            if (sabreDestinationResponse != null) {
+                return sabreDestinationResponse.getDestinations();
+            }
+
+            return Collections.emptyList();
         } catch (HttpClientErrorException e) {
             log.error("Failed to get top destinations", e);
-            return null;
+            return Collections.emptyList();
         }
     }
 
-    public List<Destination> getTopDestinations() {
+    @Cacheable(value = "sabreDestinations", key="#theme")
+    public List<Destination> getTopDestinations(String theme) {
         List<Destination> allDestinations = this.getDestinations();
-        SabreDestinationResponse sabreDestinationResponse = this.getTopSabreDestinations();
-        if (sabreDestinationResponse == null) {
-            return Collections.emptyList();
-        }
+        List<SabreDestinations> sabreDestinations = this.getTopSabreDestinations(StringUtils.isBlank(theme) ? null : theme);
 
-        return sabreDestinationResponse.getDestinations().stream()
+        return sabreDestinations.stream()
                 .map(sabreDestination -> allDestinations.stream()
                         .filter(destination -> destination.getCode().equals(sabreDestination.getDestination().getDestinationLocation()))
                         .findFirst()
@@ -163,7 +169,9 @@ public class DestinationService {
         favoriteDestinationRepository.delete(existingFavoriteDestinationEntity);
     }
 
+    @Cacheable(value = "yelpBusinesses", key = "{ #slug, #categories }")
     public List<YelpBusiness> getTopYelpBusinesses(String slug, String categories) {
+        log.info("Getting top yelp businesses. slug: {} - categories: {}", slug, categories);
         DestinationEntity destinationEntity = getDestinationEntity(slug);
         BigDecimal latitude = destinationEntity.getLatitude();
         BigDecimal longitude = destinationEntity.getLongitude();

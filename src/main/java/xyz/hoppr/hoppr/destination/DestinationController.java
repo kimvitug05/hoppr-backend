@@ -10,19 +10,18 @@ import java.util.List;
 
 @Slf4j
 @RestController
+@CrossOrigin(origins = { "http://localhost:3000", "http://www.hoppr.xyz/", "https://www.hoppr.xyz/" })
 public class DestinationController {
 
     @Autowired
     private DestinationService destinationService;
 
     @GetMapping("/destinations")
-    @CrossOrigin(origins = "http://localhost:3000")
     public List<Destination> getDestinations() {
         return destinationService.getDestinations();
     }
 
     @GetMapping("/destinations/{slug}")
-    @CrossOrigin(origins = "http://localhost:3000")
     public Destination getDestination(@PathVariable String slug, Authentication authentication) {
         String userId = authentication != null ? (String) authentication.getPrincipal() : null;
 
@@ -30,13 +29,21 @@ public class DestinationController {
     }
 
     @GetMapping("/top-destinations")
-    @CrossOrigin(origins = "http://localhost:3000")
     public List<Destination> getTopDestinations() {
-        return destinationService.getTopDestinations();
+        return destinationService.getTopDestinations("");
+    }
+
+    @GetMapping("/top-beach-destinations")
+    public List<Destination> getTopBeachDestinations() {
+        return destinationService.getTopDestinations("BEACH");
+    }
+
+    @GetMapping("/top-outdoor-destinations")
+    public List<Destination> getTopOutdoorDestinations() {
+        return destinationService.getTopDestinations("OUTDOORS");
     }
 
     @GetMapping("/recent-destinations")
-    @CrossOrigin(origins = "http://localhost:3000")
     public List<Destination> getRecentDestinations(Authentication authentication) {
         String userId = authentication != null ? (String) authentication.getPrincipal() : null;
 
@@ -44,7 +51,6 @@ public class DestinationController {
     }
 
     @GetMapping("/favorite-destinations")
-    @CrossOrigin(origins = "http://localhost:3000")
     public List<Destination> getFavoriteDestinations(Authentication authentication) {
         String userId = authentication != null ? (String) authentication.getPrincipal() : null;
 
@@ -52,7 +58,6 @@ public class DestinationController {
     }
 
     @PostMapping("/destinations/{slug}/favorite")
-    @CrossOrigin(origins = "http://localhost:3000")
     @ResponseStatus(HttpStatus.CREATED)
     public void favoriteDestination(@PathVariable String slug, Authentication authentication) {
         String userId = authentication != null ? (String) authentication.getPrincipal() : null;
@@ -61,7 +66,6 @@ public class DestinationController {
     }
 
     @DeleteMapping("/destinations/{slug}/unfavorite")
-    @CrossOrigin(origins = "http://localhost:3000")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unfavoriteDestination(@PathVariable String slug, Authentication authentication) {
         String userId = authentication != null ? (String) authentication.getPrincipal() : null;
@@ -70,7 +74,6 @@ public class DestinationController {
     }
 
     @GetMapping("/destinations/{slug}/top-eats")
-    @CrossOrigin(origins = "http://localhost:3000")
     // TODO: CACHE EVERY 24 HOURS
     public List<YelpBusiness> getTopEats(@PathVariable String slug) {
         return destinationService.getTopYelpBusinesses(slug, "food");
