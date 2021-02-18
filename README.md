@@ -57,6 +57,8 @@ Heroku
 - Add ‘Similar To’ section 
 - Add followers/following functionality
 
+##
+
 <em>Hoppr started as a capstone project for Ada Developers Academy by Kim Vitug.</em>
 
 <em>[Ada Developers Academy](https://adadevelopersacademy.org/) is a non-profit tuition-free intensive coding school for women and gender diverse people. It combines six months of classroom training with a five month internship at Seattle tech companies. As a culmination of the classroom learning experience, students create a Capstone project where they are encouraged to learn and implement new technologies with a three week deadline.</em>
